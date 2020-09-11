@@ -4,7 +4,7 @@ setup(
     name='src',
     packages=find_packages(),
     version='0.1.0',
-    description='Proejct for AI Champ Task',
+    description='Proejct for Amazon Review Scrape and Analysis',
     author='Pooja Patwari',
     license='MIT',
 )
