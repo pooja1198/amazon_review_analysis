@@ -32,9 +32,13 @@ def get_page_data(page_number):
         '//*[@data-hook="review"]/div/div/div[2]/a[1]/i/span/text()'
     ).getall()
     size = sel_page.xpath('//*[@data-hook="review"]/div/div/div[3]/a/text()').getall()
-    size = list(map(lambda x: x[x.find(' '):], size))
+    size = list(map(lambda x: x[x.find(" "):], size))
     rating = list(map(lambda x: int(str.split(x, ".")[0]), stars))
-    review_heading = sel_page.xpath('//*[@data-hook="review"]/div/div/div[2]/a[2]/span/text()').getall()
+    review_heading = sel_page.xpath(
+        '//*[@data-hook="review"]/div/div/div[2]/a[2]/span/text()'
+    ).getall()
+    review_heading = list(map(lambda x: x.lower(), review_heading))
+    review_heading = list(map(lambda x : x[:-1] if x[-1] == '.' else x, review_heading))
     return [names, rating, dates_str, month, year, review_heading, size]
 
 
@@ -74,7 +78,7 @@ def implement_pagination():
         "Date of Posting Review": dates_arr,
         "Month": months_arr,
         "Year": years_arr,
-        "Review Title": headings_arr
+        "Review Title": headings_arr,
     }
     review_df = pd.DataFrame(dict)
     return review_df
@@ -84,4 +88,28 @@ if __name__ == "__main__":
     review_df = implement_pagination()
     project_dir = str(Path(__file__).resolve().parents[2])
     parent_folder = project_dir + "/data/raw/"
+    review_df["Response"] = ""
+    review_df.loc[review_df["Rating (out of 5)"] < 3, "Response"] = "Negative"
+    review_df.loc[review_df["Rating (out of 5)"] == 3, "Response"] = "Neutral"
+    review_df.loc[review_df["Rating (out of 5)"] > 3, "Response"] = "Positive"
+    str_positive = " ".join(
+        review_df.loc[review_df["Response"] == "Positive", "Review Title"]
+    )
+    str_negative = " ".join(
+        review_df.loc[review_df["Response"] == "Negative", "Review Title"]
+    )
+    str_neutral = " ".join(
+        review_df.loc[review_df["Response"] == "Neutral", "Review Title"]
+    )
+    positive_words = str.split(str_positive)
+    negative_words = str.split(str_negative)
+    neutral_words = str.split(str_neutral)
+    words_df = pd.DataFrame(
+        {
+            "Positive Words": pd.Series(positive_words),
+            "Negative Words": pd.Series(negative_words),
+            "Neutral Words": pd.Series(neutral_words),
+        }
+    )
+    words_df.to_csv(parent_folder + "Amazon_Review_Title_words.csv")
     review_df.to_csv(parent_folder + "Amazon_Reviews_Yogabar.csv")
