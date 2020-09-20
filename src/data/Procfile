@@ -1,0 +1,1 @@
+worker: python scrape_raw_data.py
